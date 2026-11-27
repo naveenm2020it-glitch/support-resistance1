@@ -10,11 +10,6 @@ on:
 permissions:
   contents: read
 
-# Queue builds for the same ref instead of canceling an active APK build.
-concurrency:
-  group: android-apk-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
   android:
     name: Build Debug APK and test
@@ -32,18 +27,18 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      # Use the Gradle version pinned in gradle/wrapper/gradle-wrapper.properties.
+      # The wrapper pins the Gradle version in gradle/wrapper/gradle-wrapper.properties.
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
       - name: Verify Gradle wrapper
-        run: ./gradlew --version
+        run: bash ./gradlew --version
 
       - name: Build Debug APK
-        run: ./gradlew --no-daemon --stacktrace assembleDebug
+        run: bash ./gradlew --no-daemon --stacktrace assembleDebug
 
       - name: Run unit tests
-        run: ./gradlew --no-daemon --stacktrace testDebugUnitTest
+        run: bash ./gradlew --no-daemon --stacktrace testDebugUnitTest
 
       - name: Upload Debug APK
         if: success()
