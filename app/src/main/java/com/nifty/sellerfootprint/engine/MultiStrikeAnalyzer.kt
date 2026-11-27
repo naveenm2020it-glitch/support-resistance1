@@ -250,7 +250,9 @@ object MultiStrikeAnalyzer {
             if (fallbackAll.isEmpty()) break
 
             val sortedOi = fallbackAll.map { it.openInterestLots }.sortedDescending()
-            val topThresholdIdx = max(0, (sortedOi.size * 0.20).toInt() - 1)
+            // Use a ceiling so a small option chain still includes the full top-20% group.
+            // Flooring 8 strikes to one rank incorrectly excluded the second strongest wall.
+            val topThresholdIdx = max(0, kotlin.math.ceil(sortedOi.size * 0.20).toInt() - 1)
             val topThresholdOi = sortedOi[topThresholdIdx]
 
             val match = fallbackAll.firstOrNull { it.strikePrice == strike } ?: break
