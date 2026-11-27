@@ -250,7 +250,15 @@ object PatternDiscoveryEngine {
             reconciledFromPhase1.filter { it.status != PatternValidationStatus.REJECTED_OVERFITTED } +
                 ledgerC
             )
-        val activePatternIds = combinedLedgerD.map { it.patternId }.toSet()
+        // P6 and P7 are hard safety rules, not learned directional patterns.
+        // Keep both active on Session 22 even when the 17-session discovery window
+        // did not contain a prior occurrence; otherwise an unseen short-covering
+        // event could pass through and a tail-wing contract could enter zone scoring.
+        val activePatternIds = combinedLedgerD.map { it.patternId }.toSet() +
+            setOf(
+                PatternId.P6_SHORT_COVERING_CAPITULATION,
+                PatternId.P7_TAIL_WING_MARGIN_HEDGE
+            )
         val activeDirectionalPatternIds = activePatternIds.filter {
             it != PatternId.P6_SHORT_COVERING_CAPITULATION && it != PatternId.P7_TAIL_WING_MARGIN_HEDGE
         }.toSet()
