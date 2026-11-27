@@ -10,15 +10,16 @@ on:
 permissions:
   contents: read
 
+# Queue builds for the same ref instead of canceling an active APK build.
 concurrency:
   group: android-apk-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   android:
     name: Build Debug APK and test
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: Checkout source
@@ -29,20 +30,23 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
 
-      - name: Set up Gradle 8.7
+      # Use the Gradle version pinned in gradle/wrapper/gradle-wrapper.properties.
+      - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.7'
+
+      - name: Verify Gradle wrapper
+        run: ./gradlew --version
 
       - name: Build Debug APK
-        run: gradle --no-daemon --stacktrace assembleDebug
+        run: ./gradlew --no-daemon --stacktrace assembleDebug
 
       - name: Run unit tests
-        run: gradle --no-daemon --stacktrace testDebugUnitTest
+        run: ./gradlew --no-daemon --stacktrace testDebugUnitTest
 
       - name: Upload Debug APK
-        if: always()
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: NiftySellerFootprint-debug-apk
