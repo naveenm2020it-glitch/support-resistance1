@@ -10,6 +10,11 @@ on:
 permissions:
   contents: read
 
+# Keep the active build running and queue newer commits for the same branch.
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   android:
     name: Build Debug APK and test
@@ -25,23 +30,23 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
 
-      # The wrapper pins the Gradle version in gradle/wrapper/gradle-wrapper.properties.
-      - name: Set up Gradle
+      # The repository currently has no gradle-wrapper.jar, so provision the
+      # pinned Gradle version directly instead of invoking ./gradlew.
+      - name: Set up Gradle 8.7
         uses: gradle/actions/setup-gradle@v4
-
-      - name: Verify Gradle wrapper
-        run: bash ./gradlew --version
+        with:
+          gradle-version: '8.7'
 
       - name: Build Debug APK
-        run: bash ./gradlew --no-daemon --stacktrace assembleDebug
+        run: gradle --no-daemon --stacktrace assembleDebug
 
       - name: Run unit tests
-        run: bash ./gradlew --no-daemon --stacktrace testDebugUnitTest
+        run: gradle --no-daemon --stacktrace testDebugUnitTest
 
+      # Preserve the APK artifact if compilation succeeded but a test failed.
       - name: Upload Debug APK
-        if: success()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: NiftySellerFootprint-debug-apk
